@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: homework
+spec:
+  initContainers:
+    - name: init
+      image: busybox:1.28
+      command: ['sh', '-c', 'wget ya.ru -O /init/index.html']
+      volumeMounts:
+        - name: workdir
+          mountPath: /init
+
+  containers:
+    - name: web
+      image: python:3.9-slim
+      workingDir: /homework
+      command: ["python", "-m", "http.server", "8000"]
+      ports:
+        - containerPort: 8000
+      volumeMounts:
+        - name: workdir
+          mountPath: /homework
+      lifecycle:
+        preStop:
+          exec:
+            command: ["/bin/sh", "-c", "rm /homework/index.html"]
+
+  volumes:
+    - name: workdir
+      emptyDir:
+        sizeLimit: 5Mi
+        medium: Memory
