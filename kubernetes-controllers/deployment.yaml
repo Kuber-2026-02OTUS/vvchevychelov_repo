@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homework2
+  namespace: homework
+  labels:
+    app: demo-app
+spec:
+  replicas: 3
+  strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
+          maxSurge: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      nodeSelector:
+        homework: "true"
+      initContainers:
+        - name: init
+          image: busybox:1.28
+          command: ['sh', '-c', 'wget ya.ru -O /init/index.html']
+          volumeMounts:
+            - name: workdir
+              mountPath: /init
+      containers:
+        - name: web
+          image: python:3.9-slim
+          workingDir: /homework
+          command: ["python", "-m", "http.server", "8000"]
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: workdir
+              mountPath: /homework
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm /homework/index.html"]
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+      volumes:
+        - name: workdir
+          emptyDir:
+            sizeLimit: 5Mi
+            medium: Memory
