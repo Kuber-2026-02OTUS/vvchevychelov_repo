@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homework-config
+  namespace: homework
+data:
+  file: |
+    app: demo-app
+    version: "1.0"
+    environment: production
+    author: Vadim Chevychelov
